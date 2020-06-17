@@ -5,6 +5,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.CountDownTimer;
+import android.os.Handler;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -14,75 +15,116 @@ import android.widget.Toast;
 import java.util.ArrayList;
 import java.util.Random;
 
+import static java.lang.String.format;
+import static java.lang.String.valueOf;
+
 public class Main4Activity extends AppCompatActivity {
 
-    /* Hint:
-        1. This creates the Whack-A-Mole layout and starts a countdown to ready the user
-        2. The game difficulty is based on the selected level
-        3. The levels are with the following difficulties.
-            a. Level 1 will have a new mole at each 10000ms.
-                - i.e. level 1 - 10000ms
-                       level 2 - 9000ms
-                       level 3 - 8000ms
-                       ...
-                       level 10 - 1000ms
-            b. Each level up will shorten the time to next mole by 100ms with level 10 as 1000 second per mole.
-            c. For level 1 ~ 5, there is only 1 mole.
-            d. For level 6 ~ 10, there are 2 moles.
-            e. Each location of the mole is randomised.
-        4. There is an option return to the login page.
-     */
     private static final String FILENAME = "Main4Activity.java";
     private static final String TAG = "Whack-A-Mole3.0!";
+    private boolean resume = false;
+    int delay, level;
+    int score = 0;
+    int location1, location2 = 0;
+    String username;
+    Button back;
+    MyDBHandler handler;
+    TextView result;
+    Handler mHandler = new Handler();
+    Random random = new Random();
     CountDownTimer readyTimer;
     CountDownTimer newMolePlaceTimer;
 
+    Runnable mRunnable = new Runnable() {
+        @Override
+        public void run() {
+            Log.v(TAG, "New Mole Location!");
+            setNewMole();
+            mHandler.postDelayed(this, delay*1000);
+        }
+    };
+
     private void readyTimer(){
-        /*  HINT:
-            The "Get Ready" Timer.
-            Log.v(TAG, "Ready CountDown!" + millisUntilFinished/ 1000);
-            Toast message -"Get Ready In X seconds"
-            Log.v(TAG, "Ready CountDown Complete!");
-            Toast message - "GO!"
-            belongs here.
-            This timer countdown from 10 seconds to 0 seconds and stops after "GO!" is shown.
-         */
+       readyTimer = new CountDownTimer(10000,10000) {
+           @Override
+           public void onTick(long millisUntilFinished) {
+               final Toast toast = Toast.makeText(getApplicationContext(), format("Get Ready In %d seconds",millisUntilFinished/1000), Toast.LENGTH_SHORT);
+               toast.show();
+               Log.v(TAG, "Ready CountDown!" + millisUntilFinished/ 1000);
+               Handler toastH = new Handler();
+               toastH.postDelayed(new Runnable() { //this is to make sure every toast only run for 1 second
+                   @Override
+                   public void run() {
+                       toast.cancel();
+                   }
+               }, 1000);
+           }
+
+           @Override
+           public void onFinish() {
+               Toast.makeText(getApplicationContext(), "GO!", Toast.LENGTH_SHORT).show();
+               Log.v(TAG, "Ready CountDown Complete!");
+               readyTimer.cancel();
+               setNewMole();
+               placeMoleTimer();
+               setButtons();
+               resume = true;
+           }
+       };
+       readyTimer.start();
     }
+
+    private void setButtons() {
+        for (final int x : BUTTON_IDS){
+            Button btn = findViewById(x);
+            btn.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    int id = v.getId();
+                    Button click = findViewById(id);
+                    doCheck(click);
+                    mHandler.removeCallbacks(mRunnable);
+                    setNewMole();
+                    placeMoleTimer();
+                }
+            });
+        }
+    }
+
     private void placeMoleTimer(){
-        /* HINT:
-           Creates new mole location each second.
-           Log.v(TAG, "New Mole Location!");
-           setNewMole();
-           belongs here.
-           This is an infinite countdown timer.
-         */
+        mHandler.postDelayed(mRunnable, delay*10000);
     }
     private static final int[] BUTTON_IDS = {
-            /* HINT:
-                Stores the 9 buttons IDs here for those who wishes to use array to create all 9 buttons.
-                You may use if you wish to change or remove to suit your codes.*/
+            R.id.button_1, R.id.button_2, R.id.button_3, R.id.button_4,
+            R.id.button_5, R.id.button_6, R.id.button_7, R.id.button_8, R.id.button_9
     };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main4);
-        /*Hint:
-            This starts the countdown timers one at a time and prepares the user.
-            This also prepares level difficulty.
-            It also prepares the button listeners to each button.
-            You may wish to use the for loop to populate all 9 buttons with listeners.
-            It also prepares the back button and updates the user score to the database
-            if the back button is selected.
-         */
 
+        handler = new MyDBHandler(this);
+        result = findViewById(R.id.mText);
+        back = findViewById(R.id.back_btn);
 
-        for(final int id : BUTTON_IDS){
-            /*  HINT:
-            This creates a for loop to populate all 9 buttons with listeners.
-            You may use if you wish to remove or change to suit your codes.
-            */
-        }
+        Bundle bundle = getIntent().getExtras();
+        username = bundle.getString("username");
+        level = bundle.getInt("level");
+        delay = Math.abs(level - 11);
+        Log.v(TAG, FILENAME+ ": Load level " + level + " for: " + username);
+        Log.v(TAG, "Level: "+ level + " Delay: "+ delay + "s");
+
+        readyTimer();
+        result.setText(String.valueOf(score));
+        Log.v(TAG, "Current User Score: " + score);
+        back.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                updateUserScore();
+            }
+        });
+
     }
     @Override
     protected void onStart(){
@@ -91,35 +133,74 @@ public class Main4Activity extends AppCompatActivity {
     }
     private void doCheck(Button checkButton)
     {
-        /* Hint:
-            Checks for hit or miss
-            Log.v(TAG, FILENAME + ": Hit, score added!");
-            Log.v(TAG, FILENAME + ": Missed, point deducted!");
-            belongs here.
-        */
-
+       if (checkButton.getText().toString().equals("*")){
+           score++;
+           Log.v(TAG, "Hit, score added!");
+       }
+       else {
+           if (score > 0){
+               score--;
+               Log.v(TAG, "Missed, point deducted!");
+           }else{
+               Log.v(TAG, "Missed Hit!");
+           }
+       }
+        result.setText(valueOf(score));
     }
 
     public void setNewMole()
     {
-        /* Hint:
-            Clears the previous mole location and gets a new random location of the next mole location.
-            Sets the new location of the mole. Adds additional mole if the level difficulty is from 6 to 10.
-         */
-        Random ran = new Random();
-        int randomLocation = ran.nextInt(9);
+        if (level < 6){ // set one random mole
+            int randomLocation = random.nextInt(9);
+            Button this_btn = findViewById(BUTTON_IDS[randomLocation]);
+            Button last_btn = findViewById(BUTTON_IDS[location1]);
+            last_btn.setText("O");
+            this_btn.setText("*");
+            location1 = randomLocation;
+        }else{ // set two random mole
+            int randomLocation = random.nextInt(9);
+            int randomLocation2 = random.nextInt(9);
+            while (randomLocation == randomLocation2){ // to make sure two random location is distinct
+                randomLocation2 = random.nextInt(9);
+            }
+            Button last_btn1 = findViewById(BUTTON_IDS[location1]);
+            Button last_btn2 = findViewById(BUTTON_IDS[location2]);
+            last_btn1.setText("O");
+            last_btn2.setText("O");
+
+            Button this_btn = findViewById(BUTTON_IDS[randomLocation]);
+            Button this_btn2 = findViewById(BUTTON_IDS[randomLocation2]);
+            this_btn.setText("*");
+            this_btn2.setText("*");
+
+            location1 = randomLocation;
+            location2 = randomLocation2;
+
+        }
 
     }
 
     private void updateUserScore()
     {
-
-     /* Hint:
-        This updates the user score to the database if needed. Also stops the timers.
         Log.v(TAG, FILENAME + ": Update User Score...");
-      */
-        newMolePlaceTimer.cancel();
+        UserData userData = handler.findUser(username);
         readyTimer.cancel();
+        mHandler.removeCallbacks(mRunnable);
+
+        int bestScore = userData.getScores().get(level-1);
+        if (bestScore < score){
+            userData.getScores().set(level-1,score);
+            handler.deleteAccount(username);
+            handler.addUser(userData);
+        }
+
+        Log.v(TAG, FILENAME + ": Redirect to level select page");
+        Intent intent = new Intent(Main4Activity.this, Levels.class);
+        Bundle bundle = new Bundle();
+        bundle.putString("username", username);
+        intent.putExtras(bundle);
+
+        startActivity(intent);
     }
 
 }

@@ -8,10 +8,10 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
-import android.widget.Toast;
+
 import java.util.ArrayList;
 
-public class Main2Activity extends AppCompatActivity {
+public class RegisterUser extends AppCompatActivity {
     /* Hint:
         1. This is the create new user page for user to log in
         2. The user can enter - Username and Password
@@ -26,24 +26,60 @@ public class Main2Activity extends AppCompatActivity {
 
     private static final String FILENAME = "Main2Activity.java";
     private static final String TAG = "Whack-A-Mole3.0!";
+    private TextView username, password;
+    private Button registerBtn, cancleBtn;
+    MyDBHandler dbHandler;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main2);
+        setContentView(R.layout.user_register);
 
-        /* Hint:
-            This prepares the create and cancel account buttons and interacts with the database to determine
-            if the new user created exists already or is new.
-            If it exists, information is displayed to notify the user.
-            If it does not exist, the user is created in the DB with default data "0" for all levels
-            and the login page is loaded.
+        username = findViewById(R.id.username);
+        password = findViewById(R.id.password);
+        registerBtn = findViewById(R.id.createBtn);
+        cancleBtn = findViewById(R.id.cancelBtn);
 
-            Log.v(TAG, FILENAME + ": New user created successfully!");
-            Log.v(TAG, FILENAME + ": User already exist during new user creation!");
+        dbHandler = new MyDBHandler(this);
 
-         */
+        registerBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                String name = username.getText().toString();
+                String pw = password.getText().toString();
+
+                if(dbHandler.findUser(name)!= null) {
+                    Log.v(TAG, "User already exist during new user creation.");
+                    username.setText(null);
+                    password.setText(null);
+                }
+                ArrayList<Integer> levelList = new ArrayList<>();
+                ArrayList<Integer> scoreList = new ArrayList<>();
+
+                for(int i = 1; i <= 10; i++){
+                    levelList.add(i);
+                    scoreList.add(0);
+                }
+
+                UserData user = new UserData(name, pw, levelList, scoreList);
+                dbHandler.addUser(user);
+                Log.v(TAG, FILENAME + ": New user created successfully!");
+
+                Intent intent = new Intent(RegisterUser.this, MainActivity.class);
+                startActivity(intent);
+            }
+        });
+
+        cancleBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(RegisterUser.this, MainActivity.class);
+                startActivity(intent);
+            }
+        });
+
     }
+
 
     protected void onStop() {
         super.onStop();

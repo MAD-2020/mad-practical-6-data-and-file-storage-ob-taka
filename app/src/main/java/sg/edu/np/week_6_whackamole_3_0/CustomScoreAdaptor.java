@@ -1,7 +1,10 @@
 package sg.edu.np.week_6_whackamole_3_0;
 
+import android.content.Context;
 import android.content.Intent;
+import android.hardware.usb.UsbRequest;
 import android.os.Bundle;
+import android.os.Parcel;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -12,39 +15,48 @@ import java.util.ArrayList;
 import androidx.recyclerview.widget.RecyclerView;
 
 public class CustomScoreAdaptor extends RecyclerView.Adapter<CustomScoreViewHolder> {
-    /* Hint:
-        1. This is the custom adaptor for the recyclerView list @ levels selection page
 
-     */
     private static final String FILENAME = "CustomScoreAdaptor.java";
     private static final String TAG = "Whack-A-Mole3.0!";
+    UserData userData;
+    ArrayList<Integer> level;
+    ArrayList<Integer> score;
+    Context context;
+    private CustomScoreAdaptor.OnItemClickListener listener;
 
-    public CustomScoreAdaptor(UserData userdata){
-        /* Hint:
-        This method takes in the data and readies it for processing.
-         */
+    public CustomScoreAdaptor(UserData userdata, Context context){
+       this.userData = userdata;
+       this.context = context;
+       this.level = userdata.getLevels();
+       this.score = userdata.getScores();
     }
 
     public CustomScoreViewHolder onCreateViewHolder(ViewGroup parent, int viewType){
-        /* Hint:
-        This method dictates how the viewholder layuout is to be once the viewholder is created.
-         */
+        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.level, null);
+
+        return new CustomScoreViewHolder(view, listener);
     }
 
     public void onBindViewHolder(CustomScoreViewHolder holder, final int position){
 
-        /* Hint:
-        This method passes the data to the viewholder upon bounded to the viewholder.
-        It may also be used to do an onclick listener here to activate upon user level selections.
+        String currentscore = String.valueOf(score.get(position));
+        String currentlevel = String.valueOf(level.get(position));
 
-        Log.v(TAG, FILENAME + " Showing level " + level_list.get(position) + " with highest score: " + score_list.get(position));
-        Log.v(TAG, FILENAME+ ": Load level " + position +" for: " + list_members.getMyUserName());
-         */
+        holder.score.setText(currentscore);
+        holder.level.setText(currentlevel);
+
+        Log.v(TAG, FILENAME + " Showing level " + level + " with highest score: " + score);
     }
 
     public int getItemCount(){
-        /* Hint:
-        This method returns the the size of the overall data.
-         */
+       return level.size();
+    }
+
+    public void setOnItemClickListener(CustomScoreAdaptor.OnItemClickListener mListener){
+        this.listener = mListener;
+    }
+
+    public interface OnItemClickListener {
+        void onItemClick(int position);
     }
 }

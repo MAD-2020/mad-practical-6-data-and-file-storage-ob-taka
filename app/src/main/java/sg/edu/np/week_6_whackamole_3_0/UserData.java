@@ -16,11 +16,28 @@ public class UserData {
         4. A list of Levels related to a list of corresponding Scores
 
      */
+
+    public static final String TABLE_NAME = "Accounts";
+
+    public static final String COLUMN_NAME = "Username";
+    public static final String COLUMN_PASSWORD = "Password";
+    public static final String COLUMN_SCORES = "Score";
+    public static final String COLUMN_LEVELS = "Level";
     private String MyUserName;
     private String MyPassword;
     private ArrayList<Integer> Scores = new ArrayList<>();
     private ArrayList<Integer> Levels = new ArrayList<>();
 
+    public static final String CREATE_TABLE =
+            "CREATE TABLE " + TABLE_NAME + " (" +
+                    COLUMN_NAME + " TEXT," +
+                    COLUMN_PASSWORD + " TEXT," +
+                    COLUMN_LEVELS  + " INTEGER," +
+                    COLUMN_SCORES + " INTEGER," +
+                    "PRIMARY KEY (" + COLUMN_NAME + "," +COLUMN_LEVELS + ")" + ");";
+
+    public static final String DROP_TABLE =
+            "DROP TABLE IF EXISTS " + TABLE_NAME;
     public UserData()
     {
     }

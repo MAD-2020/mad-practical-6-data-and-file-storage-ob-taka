@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical" >
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="50dp">
+
+
+        <TextView
+            android:layout_marginStart="10dp"
+            android:gravity="center_vertical"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:text="Level "
+            android:textSize="30dp"/>
+
+        <TextView
+            android:gravity="center_vertical"
+            android:id="@+id/level"
+            android:layout_width="40dp"
+            android:layout_height="match_parent"
+            android:text="1"
+            android:textSize="30dp"/>
+
+        <TextView
+            android:layout_marginStart="80dp"
+            android:gravity="center_vertical"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:textSize="25dp"
+            android:text="Highest Score: "/>
+
+        <TextView
+            android:id="@+id/score"
+            android:gravity="center_vertical"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:textSize="25dp"
+            android:text="0"/>
+    </LinearLayout>
+
+</LinearLayout>
+
